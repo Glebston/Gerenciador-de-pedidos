@@ -45,7 +45,7 @@
     <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 hidden">
         <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-3xl font-bold text-gray-900">Gerenciador de Pedidos 1.9</h1>
+                <h1 class="text-3xl font-bold text-gray-900">Gerenciador de Pedidos 2.1</h1>
                 <p id="userEmail" class="text-gray-600 mt-1">Bem-vindo(a)!</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -71,9 +71,9 @@
         </header>
         <main id="mainContent">
             <div id="ordersDashboard">
-                <main id="ordersList" class="kanban-board">
+                <div id="ordersList" class="kanban-board">
                     <div id="loadingIndicator" class="text-center w-full">Carregando...</div>
-                </main>
+                </div>
             </div>
             <div id="financeDashboard" class="hidden">
                 <div class="mb-6 flex justify-between items-center">
@@ -274,7 +274,29 @@
     const setupFirestoreListener = () => { if (!dbCollection) return; onSnapshot(query(dbCollection), (snapshot) => { allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderOrders(); renderFinanceDashboard(); }, (error) => { DOM.loadingIndicator.style.display = 'none'; DOM.ordersList.innerHTML = '<p class="w-full text-center text-gray-500">Nenhum pedido encontrado.</p>'; }); };
     const getDeliveryCountdown = (deliveryDate) => { if (!deliveryDate) return { text: 'Sem data', color: 'gray' }; const today = new Date(); today.setHours(0, 0, 0, 0); const delivery = new Date(deliveryDate + 'T00:00:00'); delivery.setHours(0, 0, 0, 0); const diffTime = delivery.getTime() - today.getTime(); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays < 0) return { text: `Atrasado há ${Math.abs(diffDays)} dia(s)`, color: 'red' }; if (diffDays === 0) return { text: 'Entrega hoje', color: 'red' }; if (diffDays === 1) return { text: 'Resta 1 dia', color: 'yellow' }; if (diffDays <= 3) return { text: `Restam ${diffDays} dias`, color: 'yellow' }; return { text: `Restam ${diffDays} dias`, color: 'green' }; };
     
-    const renderOrders = () => { if (currentDashboardView !== 'orders') return; DOM.loadingIndicator.style.display = 'none'; DOM.ordersList.className = ''; if (currentOrdersView === 'pending') { DOM.ordersList.classList.add('kanban-board'); const nonDeliveredOrders = allOrders.filter(o => o.orderStatus !== 'Entregue'); if (nonDeliveredOrders.length === 0) { DOM.ordersList.innerHTML = '<div class="w-full text-center text-gray-500">Nenhum pedido pendente.</div>'; return; } nonDeliveredOrders.sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate)); const groupedOrders = nonDeliveredOrders.reduce((acc, order) => { const date = order.deliveryDate || 'Sem Data'; if (!acc[date]) acc[date] = []; acc[date].push(order); return acc; }, {}); let html = ''; for (const date in groupedOrders) { const orders = groupedOrders[date]; const formattedDate = date === 'Sem Data' ? 'Sem Data de Entrega' : new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }); html += `<div class="kanban-column"><h2 class="font-bold text-lg text-gray-800 mb-3 sticky top-0 bg-f3f4f6 py-2">${formattedDate}</h2><div class="space-y-4">${orders.map(order => generateOrderCardHTML(order, 'pending')).join('')}</div></div>`; } DOM.ordersList.innerHTML = html; } else { DOM.ordersList.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-6'); const deliveredOrders = allOrders.filter(o => o.orderStatus === 'Entregue'); if (deliveredOrders.length === 0) { DOM.ordersList.innerHTML = '<p class="col-span-full text-center text-gray-500">Nenhum pedido entregue encontrado.</p>'; return; } deliveredOrders.sort((a, b) => new Date(b.deliveryDate || 0) - new Date(a.deliveryDate || 0)); DOM.ordersList.innerHTML = deliveredOrders.map(order => generateOrderCardHTML(order, 'delivered')).join(''); } };
+    const renderOrders = () => {
+        if (currentDashboardView !== 'orders') return;
+        DOM.loadingIndicator.style.display = 'none';
+        DOM.ordersList.className = ''; 
+
+        if (currentOrdersView === 'pending') {
+            DOM.ordersList.classList.add('kanban-board');
+            const nonDeliveredOrders = allOrders.filter(o => o.orderStatus !== 'Entregue');
+            if (nonDeliveredOrders.length === 0) { DOM.ordersList.innerHTML = '<div class="w-full text-center text-gray-500">Nenhum pedido pendente.</div>'; return; }
+            nonDeliveredOrders.sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate));
+            const groupedOrders = nonDeliveredOrders.reduce((acc, order) => { const date = order.deliveryDate || 'Sem Data'; if (!acc[date]) acc[date] = []; acc[date].push(order); return acc; }, {});
+            let html = '';
+            for (const date in groupedOrders) { const orders = groupedOrders[date]; const formattedDate = date === 'Sem Data' ? 'Sem Data de Entrega' : new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }); html += `<div class="kanban-column"><h2 class="font-bold text-lg text-gray-800 mb-3 sticky top-0 bg-f3f4f6 py-2">${formattedDate}</h2><div class="space-y-4">${orders.map(order => generateOrderCardHTML(order, 'pending')).join('')}</div></div>`; }
+            DOM.ordersList.innerHTML = html;
+        } else {
+            DOM.ordersList.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+            const deliveredOrders = allOrders.filter(o => o.orderStatus === 'Entregue');
+            if (deliveredOrders.length === 0) { DOM.ordersList.innerHTML = '<p class="col-span-full text-center text-gray-500">Nenhum pedido entregue encontrado.</p>'; return; }
+            deliveredOrders.sort((a, b) => new Date(b.deliveryDate || 0) - new Date(a.deliveryDate || 0));
+            DOM.ordersList.innerHTML = deliveredOrders.map(order => generateOrderCardHTML(order, 'delivered')).join('');
+        }
+    };
+
     const generateOrderCardHTML = (order, viewType) => { let totalValue = 0; (order.parts || []).forEach(p => { totalValue += (p.quantity || 0) * (p.unitPrice || 0); }); const countdown = getDeliveryCountdown(order.deliveryDate); const countdownColorClasses = { red: 'bg-red-100 text-red-800', yellow: 'bg-yellow-100 text-yellow-800', green: 'bg-green-100 text-green-800', gray: 'bg-gray-100 text-gray-800' }; const buttonsHtml = viewType === 'pending' ? `<button data-id="${order.id}" class="edit-btn flex-1 bg-yellow-400 text-yellow-900 font-semibold py-1 px-3 rounded-lg text-sm hover:bg-yellow-500">Editar</button>` : `<button data-id="${order.id}" class="replicate-btn flex-1 bg-green-500 text-white font-semibold py-1 px-3 rounded-lg text-sm hover:bg-green-600">Replicar</button>`; return `<div class="bg-white p-4 rounded-xl shadow-md hover:shadow-lg transition-shadow flex flex-col"><div class="flex justify-between items-start mb-2"><h3 class="text-lg font-bold text-gray-900">${order.clientName}</h3><span class="status-badge status-${order.orderStatus.replace(/\s/g, '-')}">${order.orderStatus}</span></div><p class="text-sm text-gray-600 mb-2"><strong>Total:</strong> <span class="font-semibold text-blue-600">R$ ${totalValue.toFixed(2)}</span></p>${viewType === 'pending' ? `<div class="text-sm font-semibold py-1 px-2 rounded-md text-center my-2 ${countdownColorClasses[countdown.color]}">${countdown.text}</div>` : ''}<div class="flex space-x-2 mt-auto pt-3 border-t border-gray-100"><button data-id="${order.id}" class="view-btn flex-1 bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg text-sm hover:bg-gray-300">Detalhes</button>${buttonsHtml}<button data-id="${order.id}" class="delete-btn flex-1 bg-red-400 text-red-900 font-semibold py-1 px-3 rounded-lg text-sm hover:bg-red-500">Excluir</button></div></div>`; };
     const handleBackup = () => { if (allOrders.length === 0) { showInfoModal("Não há pedidos para fazer backup."); return; } const dataStr = JSON.stringify(allOrders.map(({ id, ...rest }) => rest), null, 2); const dataBlob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(dataBlob); const link = document.createElement('a'); link.href = url; const date = new Date().toISOString().split('T')[0]; link.download = `backup-pedidos-${date}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); showInfoModal("Backup gerado com sucesso!"); };
     const handleRestore = async (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const ordersFromFile = JSON.parse(e.target.result); if (!Array.isArray(ordersFromFile)) throw new Error("Formato inválido."); await processRestore(ordersFromFile); } catch (error) { showInfoModal("Arquivo de backup inválido."); } }; reader.readAsText(file); event.target.value = ''; };

@@ -60,7 +60,7 @@
     <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 hidden">
         <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-3xl font-bold text-gray-900">Gerenciador de Pedidos 1.1</h1>
+                <h1 class="text-3xl font-bold text-gray-900">Gerenciador de Pedidos 1.2</h1>
                 <p id="userEmail" class="text-gray-600 mt-1">Bem-vindo(a)!</p>
             </div>
             <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -984,33 +984,13 @@
                 orderData.mockupUrls.push(...newUrls);
 
                 const orderId = document.getElementById('orderId').value;
-                const oldOrder = orderId ? allOrders.find(o => o.id === orderId) : null;
                 
                 if (orderId) {
                     await updateDoc(doc(dbCollection, orderId), orderData);
                 } else {
-                    const newOrderRef = await addDoc(dbCollection, orderData);
-                    orderData.id = newOrderRef.id;
+                    await addDoc(dbCollection, orderData);
                 }
-
-                /* =========================================================================
-                   BLOCO DE AUTOMAÇÃO FINANCEIRA REMOVIDO CONFORME SOLICITADO.
-                   O CONTROLE AGORA É 100% MANUAL PELA ABA FINANCEIRO.
-                const isBeingCompleted = (orderData.orderStatus === 'Finalizado' || orderData.orderStatus === 'Entregue');
-                const wasNotCompleted = oldOrder ? (oldOrder.orderStatus !== 'Finalizado' && oldOrder.orderStatus !== 'Entregue') : true;
-                if (isBeingCompleted && wasNotCompleted) {
-                    const totalValue = orderData.parts.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
-                    const transaction = {
-                        date: new Date().toISOString().split('T')[0],
-                        description: `Recebimento Pedido: ${orderData.clientName}`,
-                        amount: totalValue,
-                        type: 'income',
-                        orderId: orderId || orderData.id
-                    };
-                    await addDoc(transactionsCollection, transaction);
-                }
-                ========================================================================= */
-
+                
                 DOM.orderModal.classList.add('hidden');
             } catch (error) {
                 console.error("ERRO DETALHADO AO SALVAR:", error);
@@ -1319,12 +1299,13 @@
             const transactionsHtml = filteredTransactions.map(t => {
                 const amountClass = t.type === 'income' ? 'text-green-600' : 'text-red-600';
                 const formattedDate = new Date(t.date + 'T00:00:00').toLocaleDateString('pt-BR');
+                const transactionAmount = typeof t.amount === 'number' ? t.amount.toFixed(2) : '0.00';
                 return `
                     <tr class="border-b hover:bg-gray-50">
                         <td class="py-2 px-4">${formattedDate}</td>
                         <td class="py-2 px-4">${t.description}</td>
                         <td class="py-2 px-4 text-right font-semibold ${amountClass}">
-                            ${t.type === 'income' ? '+' : '-'} R$ ${t.amount.toFixed(2)}
+                            ${t.type === 'income' ? '+' : '-'} R$ ${transactionAmount}
                         </td>
                         <td class="py-2 px-4 text-right">
                             <button data-id="${t.id}" class="edit-transaction-btn text-blue-500 hover:underline text-sm">Editar</button>
@@ -1512,7 +1493,7 @@
         });
         
         DOM.periodFilter.addEventListener('change', renderFinanceDashboard);
-
+        
         DOM.transactionsList.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;

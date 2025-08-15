@@ -37,7 +37,7 @@
     <div id="authContainer" class="flex items-center justify-center min-h-screen">
         <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-md">
             <form id="loginForm">
-                <h2 class="text-2xl font-bold text-center">Login1</h2>
+                <h2 class="text-2xl font-bold text-center">Login2</h2>
                 <div class="mt-4 space-y-4">
                     <input type="email" id="loginEmail" placeholder="E-mail" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                     <input type="password" id="loginPassword" placeholder="Senha" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -355,14 +355,8 @@
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const IMGBB_API_KEY = "f012978df48f3596b193c06e05589442";
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8MxD_m6lKrrQKijlxQ0IQUQdC3OpTEv4",
-            authDomain: "saas-57e0d.firebaseapp.com",
-            projectId: "saas-57e0d",
-            storageBucket: "saas-57e0d.appspot.com",
-            messagingSenderId: "230026949437",
-            appId: "1:230026949437:web:9f19f286aefb96e0330b54"
-        };
+         const firebaseConfig = { apiKey: "AIzaSyA8MxD_m6lKrrQKijlxQ0lQUQdC3OpTEv4", authDomain: "saas-57e0d.firebaseapp.com", projectId: "saas-57e0d", storageBucket: "saas-57e0d.appspot.com", messagingSenderId: "230026949437", appId: "1:230026949437:web:9f19f286aefb96e0330b54" };
+
 
         let app, db, auth, userId = null, dbCollection, transactionsCollection;
         let allOrders = [], allTransactions = [];
